@@ -3124,15 +3124,11 @@ public class Kookaburra {
         double reOffset =minRe + ((maxRe - minRe) / 2);
         double imOffset =minIm + ((maxIm - minIm) / 2);
 
-//        System.out.println("Re min: " + minRe + " Re max: " + maxRe + " Re offset: " + reOffset);
-//        System.out.println("Im min: " + minIm + " Im max: " + maxIm + " Im offset: " + imOffset);
-
         for (int i = 0; i < signals.size(); i++) {
             signals.set(i, new ComplexNumber(
                     (signals.get(i).getRe() - reOffset)*0.8,
                     (signals.get(i).getIm() - imOffset)*0.8));
         }
-//        System.out.println(signals);
         return signals;
     }
 }

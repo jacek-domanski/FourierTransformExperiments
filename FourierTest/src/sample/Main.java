@@ -24,17 +24,16 @@ import static java.lang.Math.*;
 
 public class Main extends Application {
     private Pane canvas;
-    private final int sizeX = 1280;
-    private final int sizeY = 768;
+    private final int SIZE_X = 1280;
+    private final int SIZE_Y = 768;
 
-    private Translate translate = new Translate();
-
-    private final Point origin = new Point((float)sizeX/2, (float)sizeY/2);
+    private final Point ORIGIN = new Point((float) SIZE_X /2, (float) SIZE_Y /2);
+    private final double TIME_MULTIPLIER = 10.0;
+    private final double TRAILING_SAMPLES_COEFFICIENT = 0.95;
     private double t;
 
     private ArrayList<Line> lines = new ArrayList<>();
     private ArrayList<Circle> trendCircles = new ArrayList<>();
-    private Line connector;
 
     private ArrayList<ComplexNumber> signalFrequency;
 
@@ -42,13 +41,6 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception{
         addCanvas();
         signalFrequency = discreteFourierTransform(Kookaburra.generate());
-        System.out.println("DFT done: " + signalFrequency.size() + " waves generated");
-        double amplitude_sum = 0;
-
-        for (int i = 0; i < signalFrequency.size(); i++) {
-            amplitude_sum += signalFrequency.get(i).getAmplitude();
-        }
-        System.out.println("Amplitude sum: " + String.format("%.3f", amplitude_sum));
         LinesUpdater linesUpdater = new LinesUpdater();
         linesUpdater.start();
 
@@ -57,7 +49,7 @@ public class Main extends Application {
 
     private void addCanvas(){
         canvas = new Pane();
-        canvas.setPrefSize(sizeX, sizeY);
+        canvas.setPrefSize(SIZE_X, SIZE_Y);
 
         Stop[] stops = new Stop[] {
                 new Stop(0, Color.web("#000428")),
@@ -76,29 +68,41 @@ public class Main extends Application {
         final int N = x.size();
         final int WAVE_COUNT = x.size();
         for (int k = 0; k < WAVE_COUNT; k++) {
-
-            ComplexNumber complex = new ComplexNumber(0,0);
-            for (int n = 0; n < N; n++) {
-                double phi = (2 * PI * k * n) / N;
-                ComplexNumber signalTime = x.get(n);
-                ComplexNumber sinusoidalComponent = new ComplexNumber(cos(phi), -sin(phi));
-                complex.add(ComplexNumber.multiply(signalTime, sinusoidalComponent));
-            }
-            complex.setRe(complex.getRe()/N);
-            complex.setIm(complex.getIm()/N);
-
-            complex.setWaveNo(k);
-
-            if (complex.getAmplitude() > 0.01) {
-                System.out.println("Wave " + k + " generated");
-                System.out.println("re: "+ complex.getRe() + " im: " + complex.getIm());
-                System.out.println("amp: "+ complex.getAmplitude() + " phase: " + complex.getPhase());
-            }
-            X.add(complex);
+            X.add(generateWave(x, N, k));
         }
 
-        X.sort(Comparator.comparingDouble(ComplexNumber::getAmplitude).reversed());
+        sortWavesByAmplitude(X);
+        printAmplitudeSumAndWaveCount(X);
         return X;
+    }
+
+    private void sortWavesByAmplitude(ArrayList<ComplexNumber> x) {
+        x.sort(Comparator.comparingDouble(ComplexNumber::getAmplitude).reversed());
+    }
+
+    private ComplexNumber generateWave(ArrayList<ComplexNumber> x, int N, int k) {
+        ComplexNumber complex = new ComplexNumber(0,0);
+        for (int n = 0; n < N; n++) {
+            double phi = (2 * PI * k * n) / N;
+            ComplexNumber signalTime = x.get(n);
+            ComplexNumber sinusoidalComponent = new ComplexNumber(cos(phi), -sin(phi));
+            complex.add(ComplexNumber.multiply(signalTime, sinusoidalComponent));
+        }
+        complex.setRe(complex.getRe()/N);
+        complex.setIm(complex.getIm()/N);
+
+        complex.setWaveNo(k);
+        return complex;
+    }
+
+    private void printAmplitudeSumAndWaveCount(ArrayList<ComplexNumber> X) {
+        System.out.println("DFT done: " + X.size() + " waves generated");
+        double amplitude_sum = 0;
+
+        for (int i = 0; i < X.size(); i++) {
+            amplitude_sum += X.get(i).getAmplitude();
+        }
+        System.out.println("Amplitude sum: " + String.format("%.3f", amplitude_sum));
     }
 
     private ArrayList<ComplexNumber> generateSignalTime() {
@@ -121,21 +125,20 @@ public class Main extends Application {
         @Override
         public void handle(long now) {
             double dt = 2*PI/signalFrequency.size();
-            t += 6*dt;
+            t += TIME_MULTIPLIER*dt;
             t %= 2*PI;
 
             ArrayList<Point> linesEndpoints = generateEndpointsFromSignalFrequency(signalFrequency);
             drawLines(linesEndpoints);
 
             Point lastPoint = linesEndpoints.get(linesEndpoints.size()-1);
-            updateTrend(lastPoint);
-            //updateConnector(lastPoint);
+            updateTrend(lastPoint, signalFrequency.size());
         }
     }
 
     private ArrayList<Point> generateEndpointsFromSignalFrequency(ArrayList<ComplexNumber> signalFrequency) {
         ArrayList<Point> points = new ArrayList<>();
-        points.add(origin);
+        points.add(ORIGIN);
         for (int i = 0; i < signalFrequency.size(); i++) {
             ComplexNumber complex = signalFrequency.get(i);
             points.add(
@@ -149,7 +152,7 @@ public class Main extends Application {
 
     private ArrayList<Point> generateEndpointsFromConstant() {
         ArrayList<Point> points = new ArrayList<>();
-        points.add(origin);
+        points.add(ORIGIN);
         points.add(new Point(points.get(points.size()-1), 30+3*t, 150));
         points.add(new Point(points.get(points.size()-1), 150+7*t, 100));
         points.add(new Point(points.get(points.size()-1), 270+9*t, 75));
@@ -176,23 +179,15 @@ public class Main extends Application {
         canvas.getChildren().addAll(lines);
     }
 
-    private void updateTrend(Point point) {
-        removeLastCircle();
-        //translateTrend();
-        addNewCircle(point);
+    private void updateTrend(Point new_point, int wave_count) {
+        removeLastCircle(wave_count);
+        addNewCircle(new_point);
     }
 
-    private void removeLastCircle() {
-        while (trendCircles.size() >= 500) {
+    private void removeLastCircle(int wave_count) {
+        while (trendCircles.size() >= wave_count * TRAILING_SAMPLES_COEFFICIENT / TIME_MULTIPLIER) {
             Circle lastCircle = trendCircles.remove(trendCircles.size()-1);
             canvas.getChildren().remove(lastCircle);
-        }
-    }
-
-    private void translateTrend() {
-        translate.setX(1);
-        for (int i = 0; i < trendCircles.size(); i++) {
-            trendCircles.get(i).getTransforms().add(translate);
         }
     }
 
@@ -201,37 +196,13 @@ public class Main extends Application {
         canvas.getChildren().add(trendCircles.get(0));
     }
 
-    private void updateConnector(Point lastPoint) {
-        removeOldConnector();
-        addNewConnector(lastPoint);
-    }
-
-    private void removeOldConnector() {
-        if (connector != null) {
-            canvas.getChildren().remove(connector);
-        }
-    }
-
-    private void addNewConnector(Point lastPoint) {
-        //System.out.println("Y: " + String.format("%.2f", lastPoint.y-origin.y));
-        connector = new Line();
-        connector.setStartX(lastPoint.x);
-        connector.setStartY(lastPoint.y);
-        connector.setEndX(trendCircles.get(0).getCenterX());
-        connector.setEndY(trendCircles.get(0).getCenterY());
-        connector.setStroke(Color.GRAY);
-
-        canvas.getChildren().add(connector);
-    }
-
     private void stageHandling(Stage primaryStage){
         primaryStage.setTitle("Good morning Mr. Fourier");
-        primaryStage.setScene(new Scene(canvas, sizeX, sizeY));
+        primaryStage.setScene(new Scene(canvas, SIZE_X, SIZE_Y));
         primaryStage.show();
     }
 
     public static void main(String[] args) {
         launch(args);
-
     }
 }
