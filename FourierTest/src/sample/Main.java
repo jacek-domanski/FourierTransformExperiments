@@ -18,7 +18,6 @@ import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 
 import static java.lang.Math.*;
@@ -39,27 +38,31 @@ public class Main extends Application {
 
     private ArrayList<ComplexNumber> signalFrequency;
 
-    private class ComplexNumber {
-        public double re;
-        public double im;
-
-        public int wave_no;
-        public double amplitude;
-        public double phase;
-
-        public ComplexNumber(double re, double im) {
-            this.re = re;
-            this.im = im;
-        }
-
-        public String toString() {
-            return "re:"+ String.format("%.2f", this.re) +" im:"+ String.format("%.2f", this.im);
-        }
-
-        public double getAmplitude(){
-            return amplitude;
-        }
-    }
+//    private class ComplexNumber {
+//        public double re;
+//        public double im;
+//
+//        public int wave_no;
+//        public double amplitude;
+//        public double phase;
+//
+//        public ComplexNumber(double re, double im) {
+//            this.re = re;
+//            this.im = im;
+//        }
+//
+//        public String toString() {
+//            return "re:"+ String.format("%.2f", this.re) +" im:"+ String.format("%.2f", this.im);
+//        }
+//
+//        public double getAmplitude(){
+//            return amplitude;
+//        }
+//
+//        public static ComplexNumber multiply(ComplexNumber c1, ComplexNumber c2) {
+//
+//        }
+//    }
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -69,7 +72,7 @@ public class Main extends Application {
         double amplitude_sum = 0;
 
         for (int i = 0; i < signalFrequency.size(); i++) {
-            amplitude_sum += signalFrequency.get(i).amplitude;
+            amplitude_sum += signalFrequency.get(i).getAmplitude();
         }
         System.out.println("Amplitude sum: " + String.format("%.3f", amplitude_sum));
         LinesUpdater linesUpdater = new LinesUpdater();
@@ -109,13 +112,13 @@ public class Main extends Application {
                 im -= x.get(n) * sin(phi);
             }
             ComplexNumber complex = new ComplexNumber(re/N, im/N);
-            complex.wave_no = k;
-            complex.amplitude = hypot(complex.re, complex.im);
-            complex.phase = atan(complex.im / complex.re) + (PI/2);
-            if (complex.amplitude > 0.01) {
+            complex.setWaveNo(k);
+//            complex.amplitude = hypot(complex.re, complex.im);
+//            complex.phase = atan(complex.im / complex.re) + (PI/2);
+            if (complex.getAmplitude() > 0.01) {
                 System.out.println("Wave " + k + " generated");
-                System.out.println("re: "+ complex.re + " im: " + complex.im);
-                System.out.println("amp: "+ complex.amplitude + " phase: " + complex.phase);
+                System.out.println("re: "+ complex.getRe() + " im: " + complex.getIm());
+                System.out.println("amp: "+ complex.getAmplitude() + " phase: " + complex.getPhase());
             }
             X.add(complex);
         }
@@ -158,8 +161,8 @@ public class Main extends Application {
             ComplexNumber complex = signalFrequency.get(i);
             points.add(
                 new Point(points.get(points.size() - 1),
-                (complex.wave_no*t) + complex.phase,
-                complex.amplitude));
+                (complex.getWaveNo()*t) + complex.getPhase() + (PI/2),
+                complex.getAmplitude()));
         }
 
         return points;
