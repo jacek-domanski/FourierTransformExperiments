@@ -40,7 +40,7 @@ public class ComplexNumber {
     }
 
     public double getPhase() {
-        return atan(this.im / this.re);
+        return atan2(this.im, this.re);
     }
 
     public String toString() {

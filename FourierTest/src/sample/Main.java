@@ -29,7 +29,7 @@ public class Main extends Application {
 
     private Translate translate = new Translate();
 
-    private final Point origin = new Point((float)sizeX/4, (float)sizeY/2);
+    private final Point origin = new Point((float)sizeX/2, (float)sizeY/2);
     private double t;
 
     private ArrayList<Line> lines = new ArrayList<>();
@@ -41,7 +41,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception{
         addCanvas();
-        signalFrequency = discreteFourierTransform(generateSignalTime());
+        signalFrequency = discreteFourierTransform(Kookaburra.generate());
         System.out.println("DFT done: " + signalFrequency.size() + " waves generated");
         double amplitude_sum = 0;
 
@@ -109,8 +109,8 @@ public class Main extends Application {
             ComplexNumber complex = new ComplexNumber(
 //                    70*sin((2*PI*(float)i)/SAMPLE_COUNT) + 30*cos((3*PI*2*(float)i)/SAMPLE_COUNT),
 //                    50*sin((7*PI*(float)i)/SAMPLE_COUNT));
-                    70*sin((2*PI*(float)i)/SAMPLE_COUNT) + 30*cos((3*PI*2*(float)i)/SAMPLE_COUNT),
-                    50*cos((2*PI*(float)i)/SAMPLE_COUNT));
+                    50,
+                    50*cos((2*PI*(float)i)/SAMPLE_COUNT)+0*cos((20*2*PI*(float)i)/SAMPLE_COUNT));
             x.add(complex);
         }
         System.out.println(x);
@@ -121,7 +121,7 @@ public class Main extends Application {
         @Override
         public void handle(long now) {
             double dt = 2*PI/signalFrequency.size();
-            t += dt;
+            t += 6*dt;
             t %= 2*PI;
 
             ArrayList<Point> linesEndpoints = generateEndpointsFromSignalFrequency(signalFrequency);
@@ -129,7 +129,7 @@ public class Main extends Application {
 
             Point lastPoint = linesEndpoints.get(linesEndpoints.size()-1);
             updateTrend(lastPoint);
-            updateConnector(lastPoint);
+            //updateConnector(lastPoint);
         }
     }
 
@@ -140,7 +140,7 @@ public class Main extends Application {
             ComplexNumber complex = signalFrequency.get(i);
             points.add(
                 new Point(points.get(points.size() - 1),
-                (complex.getWaveNo()*t) + complex.getPhase() + (PI/2),
+                (complex.getWaveNo()*t) + complex.getPhase(),
                 complex.getAmplitude()));
         }
 
@@ -178,12 +178,12 @@ public class Main extends Application {
 
     private void updateTrend(Point point) {
         removeLastCircle();
-        translateTrend();
+        //translateTrend();
         addNewCircle(point);
     }
 
     private void removeLastCircle() {
-        while (trendCircles.size() >= sizeX/2) {
+        while (trendCircles.size() >= 500) {
             Circle lastCircle = trendCircles.remove(trendCircles.size()-1);
             canvas.getChildren().remove(lastCircle);
         }
@@ -197,7 +197,7 @@ public class Main extends Application {
     }
 
     private void addNewCircle(Point point) {
-        trendCircles.add(0, new Circle((float)sizeX/2, point.y, 0.5, Color.LIGHTBLUE));
+        trendCircles.add(0, new Circle(point.x, point.y, 0.5, Color.LIGHTBLUE));
         canvas.getChildren().add(trendCircles.get(0));
     }
 
@@ -213,7 +213,7 @@ public class Main extends Application {
     }
 
     private void addNewConnector(Point lastPoint) {
-        System.out.println("Y: " + String.format("%.2f", lastPoint.y-origin.y));
+        //System.out.println("Y: " + String.format("%.2f", lastPoint.y-origin.y));
         connector = new Line();
         connector.setStartX(lastPoint.x);
         connector.setStartY(lastPoint.y);
