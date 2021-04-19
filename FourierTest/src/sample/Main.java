@@ -38,36 +38,10 @@ public class Main extends Application {
 
     private ArrayList<ComplexNumber> signalFrequency;
 
-//    private class ComplexNumber {
-//        public double re;
-//        public double im;
-//
-//        public int wave_no;
-//        public double amplitude;
-//        public double phase;
-//
-//        public ComplexNumber(double re, double im) {
-//            this.re = re;
-//            this.im = im;
-//        }
-//
-//        public String toString() {
-//            return "re:"+ String.format("%.2f", this.re) +" im:"+ String.format("%.2f", this.im);
-//        }
-//
-//        public double getAmplitude(){
-//            return amplitude;
-//        }
-//
-//        public static ComplexNumber multiply(ComplexNumber c1, ComplexNumber c2) {
-//
-//        }
-//    }
-
     @Override
     public void start(Stage primaryStage) throws Exception{
         addCanvas();
-        signalFrequency = discreteFourierTransform();
+        signalFrequency = discreteFourierTransform(generateSignalTime());
         System.out.println("DFT done: " + signalFrequency.size() + " waves generated");
         double amplitude_sum = 0;
 
@@ -96,25 +70,25 @@ public class Main extends Application {
                         Insets.EMPTY)));
     }
 
-    private ArrayList<ComplexNumber> discreteFourierTransform() {
-        ArrayList<Double> x = generateSignalTime();
+    private ArrayList<ComplexNumber> discreteFourierTransform(ArrayList<ComplexNumber> x) {
         ArrayList<ComplexNumber> X = new ArrayList<>();
 
         final int N = x.size();
         final int WAVE_COUNT = x.size();
         for (int k = 0; k < WAVE_COUNT; k++) {
-            double re = 0.0;
-            double im = 0.0;
 
+            ComplexNumber complex = new ComplexNumber(0,0);
             for (int n = 0; n < N; n++) {
                 double phi = (2 * PI * k * n) / N;
-                re += x.get(n) * cos(phi);
-                im -= x.get(n) * sin(phi);
+                ComplexNumber signalTime = x.get(n);
+                ComplexNumber sinusoidalComponent = new ComplexNumber(cos(phi), -sin(phi));
+                complex.add(ComplexNumber.multiply(signalTime, sinusoidalComponent));
             }
-            ComplexNumber complex = new ComplexNumber(re/N, im/N);
+            complex.setRe(complex.getRe()/N);
+            complex.setIm(complex.getIm()/N);
+
             complex.setWaveNo(k);
-//            complex.amplitude = hypot(complex.re, complex.im);
-//            complex.phase = atan(complex.im / complex.re) + (PI/2);
+
             if (complex.getAmplitude() > 0.01) {
                 System.out.println("Wave " + k + " generated");
                 System.out.println("re: "+ complex.getRe() + " im: " + complex.getIm());
@@ -127,12 +101,17 @@ public class Main extends Application {
         return X;
     }
 
-    private ArrayList<Double> generateSignalTime() {
-        ArrayList<Double> x = new ArrayList<>();
+    private ArrayList<ComplexNumber> generateSignalTime() {
+        ArrayList<ComplexNumber> x = new ArrayList<>();
 
         final int SAMPLE_COUNT = 200;
         for (int i = 0; i < SAMPLE_COUNT; i++) {
-            x.add(70*sin((2*PI*(float)i)/SAMPLE_COUNT) + 30*cos((3*PI*2*(float)i)/SAMPLE_COUNT));
+            ComplexNumber complex = new ComplexNumber(
+//                    70*sin((2*PI*(float)i)/SAMPLE_COUNT) + 30*cos((3*PI*2*(float)i)/SAMPLE_COUNT),
+//                    50*sin((7*PI*(float)i)/SAMPLE_COUNT));
+                    70*sin((2*PI*(float)i)/SAMPLE_COUNT) + 30*cos((3*PI*2*(float)i)/SAMPLE_COUNT),
+                    50*cos((2*PI*(float)i)/SAMPLE_COUNT));
+            x.add(complex);
         }
         System.out.println(x);
         return x;

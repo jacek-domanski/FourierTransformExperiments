@@ -52,4 +52,9 @@ public class ComplexNumber {
         double im = c1.re * c2.im + c1.im * c2.re;
         return new ComplexNumber(re, im);
     }
+
+    public void add(ComplexNumber other) {
+        this.re += other.re;
+        this.im += other.im;
+    }
 }
