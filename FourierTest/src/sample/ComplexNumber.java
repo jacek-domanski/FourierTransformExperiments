@@ -47,6 +47,10 @@ public class ComplexNumber {
         return "re:"+ String.format("%.2f", this.re) +" im:"+ String.format("%.2f", this.im);
     }
 
+//    public String toString(int precision) {
+//        return "re:"+ String.format("%.f", this.re) +" im:"+ String.format("%.2f", this.im);
+//    }
+
     public static ComplexNumber multiply(ComplexNumber c1, ComplexNumber c2) {
         double re = c1.re * c2.re - c1.im * c2.im;
         double im = c1.re * c2.im + c1.im * c2.re;
