@@ -65,10 +65,9 @@ public class Main extends Application {
     private ArrayList<ComplexNumber> discreteFourierTransform(ArrayList<ComplexNumber> x) {
         ArrayList<ComplexNumber> X = new ArrayList<>();
 
-        final int N = x.size();
         final int WAVE_COUNT = x.size();
         for (int k = 0; k < WAVE_COUNT; k++) {
-            X.add(generateWave(x, N, k));
+            X.add(generateWave(x, k));
         }
 
         sortWavesByAmplitude(X);
@@ -76,12 +75,10 @@ public class Main extends Application {
         return X;
     }
 
-    private void sortWavesByAmplitude(ArrayList<ComplexNumber> x) {
-        x.sort(Comparator.comparingDouble(ComplexNumber::getAmplitude).reversed());
-    }
-
-    private ComplexNumber generateWave(ArrayList<ComplexNumber> x, int N, int k) {
+    private ComplexNumber generateWave(ArrayList<ComplexNumber> x, int k) {
         ComplexNumber complex = new ComplexNumber(0,0);
+        final int N = x.size();
+
         for (int n = 0; n < N; n++) {
             double phi = (2 * PI * k * n) / N;
             ComplexNumber signalTime = x.get(n);
@@ -93,6 +90,10 @@ public class Main extends Application {
 
         complex.setWaveNo(k);
         return complex;
+    }
+
+    private void sortWavesByAmplitude(ArrayList<ComplexNumber> x) {
+        x.sort(Comparator.comparingDouble(ComplexNumber::getAmplitude).reversed());
     }
 
     private void printAmplitudeSumAndWaveCount(ArrayList<ComplexNumber> X) {
