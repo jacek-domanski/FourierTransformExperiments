@@ -18,6 +18,7 @@ import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.sin;
@@ -53,10 +54,12 @@ public class Main extends Application {
         canvas = new Pane();
         canvas.setPrefSize(SIZE_X, SIZE_Y);
 
-        Stop[] stops = new Stop[] {
+        Stop[] stops =
+            new Stop[] {
                 new Stop(0, Color.web("#000428")),
                 new Stop(1, Color.web("#004e92"))};
-        LinearGradient backgroundLinearGradient = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
+        LinearGradient backgroundLinearGradient =
+            new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE, stops);
 
         canvas.setBackground(new Background(
                 new BackgroundFill(backgroundLinearGradient,
@@ -148,13 +151,26 @@ public class Main extends Application {
     private ArrayList<Point> generateEndpointsFromSignalFrequency(ArrayList<Wave> signalFrequency) {
         ArrayList<Point> points = new ArrayList<>();
         points.add(ORIGIN);
-        for (int i = 0; i < signalFrequency.size(); i++) {
-            Wave wave = signalFrequency.get(i);
-            points.add(
-                new Point(points.get(points.size() - 1),
-                (wave.getWaveNo()* time) + wave.getPhase(),
-                wave.getAmplitude()));
-        }
+//        for (Wave wave : signalFrequency) {
+//            points.add(
+//                new Point(
+//                    points.get(points.size() - 1),
+//                    wave.getWaveNo() * time + wave.getPhase(),
+//                    wave.getAmplitude()));
+//        }
+        Point lastPoint = new Point (points.get(0), 0, 0);
+
+        signalFrequency.stream()
+            .map(wave -> new Point(
+                lastPoint,
+                wave.getWaveNo() * time + wave.getPhase(),
+                wave.getAmplitude()
+            ))
+            .forEach(point -> {
+                points.add(point);
+                lastPoint.x = point.x;
+                lastPoint.y = point.y;
+            });
 
         return points;
     }
@@ -174,17 +190,27 @@ public class Main extends Application {
             canvas.getChildren().remove(lines.remove(0));
         }
 
-        for (int i = 0; i < points.size() - 1; i++) {
-            Line line = new Line();
-            line.setStartX(points.get(i).x);
-            line.setStartY(points.get(i).y);
-            line.setEndX(points.get(i+1).x);
-            line.setEndY(points.get(i+1).y);
-            line.setStroke(Color.WHITE);
-            line.setSmooth(true);
-            line.setStrokeWidth(2);
-            lines.add(line);
-        }
+        Point lastPoint = new Point(points.get(0), 0, 0);
+
+        points.stream()
+            .skip(1)
+            .map(point ->
+                new Line(
+                    lastPoint.x,
+                    lastPoint.y,
+                    point.x,
+                    point.y))
+            .forEach(line -> {
+                lastPoint.x = line.getEndX();
+                lastPoint.y = line.getEndY();
+
+                line.setStroke(Color.WHITE);
+                line.setSmooth(true);
+                line.setStrokeWidth(2);
+
+                lines.add(line);
+            });
+
         canvas.getChildren().addAll(lines);
     }
 
