@@ -19,7 +19,9 @@ import javafx.stage.Stage;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-import static java.lang.Math.*;
+import static java.lang.Math.PI;
+import static java.lang.Math.sin;
+import static java.lang.Math.cos;
 
 public class Main extends Application {
     private final int SIZE_X = 1280;
@@ -62,48 +64,54 @@ public class Main extends Application {
                         Insets.EMPTY)));
     }
 
-    private ArrayList<Wave> discreteFourierTransform(ArrayList<ComplexNumber> x) {
-        ArrayList<Wave> X = new ArrayList<>();
+    private ArrayList<Wave> discreteFourierTransform(ArrayList<ComplexNumber> input) {
+        // Implementation of https://en.wikipedia.org/wiki/Discrete_Fourier_transform#Definition
+        // input - x
+        // waves - X
+        // WAVE_COUNT - N
 
-        final int WAVE_COUNT = x.size();
-        for (int k = 0; k < WAVE_COUNT; k++) {
-            X.add(generateWave(x, k));
+        ArrayList<Wave> waves = new ArrayList<>();
+
+        final int WAVE_COUNT = input.size();
+        for (int i = 0; i < WAVE_COUNT; i++) {
+            waves.add(generateWave(input, i));
         }
 
-        sortWavesByAmplitude(X);
-        printAmplitudeSumAndWaveCount(X);
-        return X;
+        sortWavesByAmplitude(waves);
+        printAmplitudeSumAndWaveCount(waves);
+        return waves;
     }
 
-    private Wave generateWave(ArrayList<ComplexNumber> x, int k) {
+    private Wave generateWave(ArrayList<ComplexNumber> input, int waveNo) {
         Wave wave = new Wave(0,0);
-        final int N = x.size();
+        final int WAVE_COUNT = input.size();
 
-        for (int n = 0; n < N; n++) {
-            double phi = (2 * PI * k * n) / N;
-            ComplexNumber signalTime = x.get(n);
+        for (int i = 0; i < WAVE_COUNT; i++) {
+            double phi = (2 * PI * waveNo * i) / WAVE_COUNT;
+            ComplexNumber inputComponent = input.get(i);
             ComplexNumber sinusoidalComponent = new ComplexNumber(cos(phi), -sin(phi));
-            wave.add(ComplexNumber.multiply(signalTime, sinusoidalComponent));
+            wave.add(ComplexNumber.multiply(inputComponent, sinusoidalComponent));
         }
-        wave.setRe(wave.getRe()/N);
-        wave.setIm(wave.getIm()/N);
+        wave.setRe(wave.getRe()/WAVE_COUNT);
+        wave.setIm(wave.getIm()/WAVE_COUNT);
 
-        wave.setWaveNo(k);
+        wave.setWaveNo(waveNo);
         return wave;
     }
 
-    private void sortWavesByAmplitude(ArrayList<Wave> x) {
-        x.sort(Comparator.comparingDouble(Wave::getAmplitude).reversed());
+    private void sortWavesByAmplitude(ArrayList<Wave> waves) {
+        waves.sort(Comparator.comparingDouble(Wave::getAmplitude).reversed());
     }
 
-    private void printAmplitudeSumAndWaveCount(ArrayList<Wave> X) {
-        System.out.println("DFT done: " + X.size() + " waves generated");
-        double amplitude_sum = 0;
+    private void printAmplitudeSumAndWaveCount(ArrayList<Wave> waves) {
+        System.out.println("DFT done: " + waves.size() + " waves generated");
 
-        for (int i = 0; i < X.size(); i++) {
-            amplitude_sum += X.get(i).getAmplitude();
-        }
-        System.out.println("Amplitude sum: " + String.format("%.3f", amplitude_sum));
+        double amplitudeSum =
+            waves.stream()
+                .mapToDouble(Wave::getAmplitude)
+                .sum();
+
+        System.out.println("Amplitude sum: " + String.format("%.3f", amplitudeSum));
     }
 
     private ArrayList<ComplexNumber> generateSignalTime() {
