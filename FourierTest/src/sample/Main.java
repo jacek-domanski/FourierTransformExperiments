@@ -14,7 +14,6 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
@@ -23,14 +22,15 @@ import java.util.Comparator;
 import static java.lang.Math.*;
 
 public class Main extends Application {
-    private Pane canvas;
     private final int SIZE_X = 1280;
     private final int SIZE_Y = 768;
 
     private final Point ORIGIN = new Point((float) SIZE_X /2, (float) SIZE_Y /2);
     private final double TIME_MULTIPLIER = 10.0;
     private final double TRAILING_SAMPLES_COEFFICIENT = 0.95;
-    private double t;
+
+    private Pane canvas;
+    private double time;
 
     private ArrayList<Line> lines = new ArrayList<>();
     private ArrayList<Circle> trendCircles = new ArrayList<>();
@@ -126,8 +126,8 @@ public class Main extends Application {
         @Override
         public void handle(long now) {
             double dt = 2*PI/signalFrequency.size();
-            t += TIME_MULTIPLIER*dt;
-            t %= 2*PI;
+            time += TIME_MULTIPLIER*dt;
+            time %= 2*PI;
 
             ArrayList<Point> linesEndpoints = generateEndpointsFromSignalFrequency(signalFrequency);
             drawLines(linesEndpoints);
@@ -141,11 +141,11 @@ public class Main extends Application {
         ArrayList<Point> points = new ArrayList<>();
         points.add(ORIGIN);
         for (int i = 0; i < signalFrequency.size(); i++) {
-            Wave complex = signalFrequency.get(i);
+            Wave wave = signalFrequency.get(i);
             points.add(
                 new Point(points.get(points.size() - 1),
-                (complex.getWaveNo()*t) + complex.getPhase(),
-                complex.getAmplitude()));
+                (wave.getWaveNo()* time) + wave.getPhase(),
+                wave.getAmplitude()));
         }
 
         return points;
@@ -154,9 +154,9 @@ public class Main extends Application {
     private ArrayList<Point> generateEndpointsFromConstant() {
         ArrayList<Point> points = new ArrayList<>();
         points.add(ORIGIN);
-        points.add(new Point(points.get(points.size()-1), 30+3*t, 150));
-        points.add(new Point(points.get(points.size()-1), 150+7*t, 100));
-        points.add(new Point(points.get(points.size()-1), 270+9*t, 75));
+        points.add(new Point(points.get(points.size()-1), 30+3* time, 150));
+        points.add(new Point(points.get(points.size()-1), 150+7* time, 100));
+        points.add(new Point(points.get(points.size()-1), 270+9* time, 75));
 
         return points;
     }
