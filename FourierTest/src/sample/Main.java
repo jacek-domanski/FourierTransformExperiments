@@ -35,7 +35,7 @@ public class Main extends Application {
     private ArrayList<Line> lines = new ArrayList<>();
     private ArrayList<Circle> trendCircles = new ArrayList<>();
 
-    private ArrayList<ComplexNumber> signalFrequency;
+    private ArrayList<Wave> signalFrequency;
 
     @Override
     public void start(Stage primaryStage) throws Exception{
@@ -62,8 +62,8 @@ public class Main extends Application {
                         Insets.EMPTY)));
     }
 
-    private ArrayList<ComplexNumber> discreteFourierTransform(ArrayList<ComplexNumber> x) {
-        ArrayList<ComplexNumber> X = new ArrayList<>();
+    private ArrayList<Wave> discreteFourierTransform(ArrayList<ComplexNumber> x) {
+        ArrayList<Wave> X = new ArrayList<>();
 
         final int WAVE_COUNT = x.size();
         for (int k = 0; k < WAVE_COUNT; k++) {
@@ -75,28 +75,28 @@ public class Main extends Application {
         return X;
     }
 
-    private ComplexNumber generateWave(ArrayList<ComplexNumber> x, int k) {
-        ComplexNumber complex = new ComplexNumber(0,0);
+    private Wave generateWave(ArrayList<ComplexNumber> x, int k) {
+        Wave wave = new Wave(0,0);
         final int N = x.size();
 
         for (int n = 0; n < N; n++) {
             double phi = (2 * PI * k * n) / N;
             ComplexNumber signalTime = x.get(n);
             ComplexNumber sinusoidalComponent = new ComplexNumber(cos(phi), -sin(phi));
-            complex.add(ComplexNumber.multiply(signalTime, sinusoidalComponent));
+            wave.add(ComplexNumber.multiply(signalTime, sinusoidalComponent));
         }
-        complex.setRe(complex.getRe()/N);
-        complex.setIm(complex.getIm()/N);
+        wave.setRe(wave.getRe()/N);
+        wave.setIm(wave.getIm()/N);
 
-        complex.setWaveNo(k);
-        return complex;
+        wave.setWaveNo(k);
+        return wave;
     }
 
-    private void sortWavesByAmplitude(ArrayList<ComplexNumber> x) {
-        x.sort(Comparator.comparingDouble(ComplexNumber::getAmplitude).reversed());
+    private void sortWavesByAmplitude(ArrayList<Wave> x) {
+        x.sort(Comparator.comparingDouble(Wave::getAmplitude).reversed());
     }
 
-    private void printAmplitudeSumAndWaveCount(ArrayList<ComplexNumber> X) {
+    private void printAmplitudeSumAndWaveCount(ArrayList<Wave> X) {
         System.out.println("DFT done: " + X.size() + " waves generated");
         double amplitude_sum = 0;
 
@@ -137,11 +137,11 @@ public class Main extends Application {
         }
     }
 
-    private ArrayList<Point> generateEndpointsFromSignalFrequency(ArrayList<ComplexNumber> signalFrequency) {
+    private ArrayList<Point> generateEndpointsFromSignalFrequency(ArrayList<Wave> signalFrequency) {
         ArrayList<Point> points = new ArrayList<>();
         points.add(ORIGIN);
         for (int i = 0; i < signalFrequency.size(); i++) {
-            ComplexNumber complex = signalFrequency.get(i);
+            Wave complex = signalFrequency.get(i);
             points.add(
                 new Point(points.get(points.size() - 1),
                 (complex.getWaveNo()*t) + complex.getPhase(),

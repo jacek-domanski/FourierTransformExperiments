@@ -7,8 +7,6 @@ public class ComplexNumber {
     private double re;
     private double im;
 
-    private int waveNo;
-
     public static ComplexNumber multiply(ComplexNumber c1, ComplexNumber c2) {
         double re = c1.re * c2.re - c1.im * c2.im;
         double im = c1.re * c2.im + c1.im * c2.re;
@@ -47,13 +45,5 @@ public class ComplexNumber {
 
     public void setIm(double im) {
         this.im = im;
-    }
-
-    public int getWaveNo() {
-        return waveNo;
-    }
-
-    public void setWaveNo(int waveNo) {
-        this.waveNo = waveNo;
     }
 }
