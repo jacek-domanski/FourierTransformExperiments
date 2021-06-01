@@ -1,5 +1,7 @@
 package sample;
 
+import javafx.scene.shape.Line;
+
 public class Point {
     public double x;
     public double y;
@@ -9,9 +11,14 @@ public class Point {
         this.y = y;
     }
 
-    public Point(Point p, double angleRads, double length) {
-        this.x = p.x + length * Math.cos(angleRads);
-        this.y = p.y + length * Math.sin(angleRads);
+    public Point(Point other) {
+        this.x = other.x;
+        this.y = other.y;
+    }
+
+    public Point(Point p, double angleRads, double distance) {
+        this.x = p.x + distance * Math.cos(angleRads);
+        this.y = p.y + distance * Math.sin(angleRads);
     }
 
     public double distance(Point other) {
@@ -19,7 +26,28 @@ public class Point {
         double yDistance = this.y - other.y;
 
         return Math.hypot(xDistance, yDistance);
+    }
 
+    public Point copy() {
+        return new Point(this);
+    }
+
+    public Point translatedInPolar(double angle, double distance) {
+        return new Point(this, angle, distance);
+    }
+
+    public void set(Point other) {
+        this.x = other.x;
+        this.y = other.y;
+    }
+
+    public void setToLineEnd(Line line) {
+        this.x = line.getEndX();
+        this.y = line.getEndY();
+    }
+
+    public Line makeLine(Point end) {
+        return new Line(this.x, this.y, end.x, end.y);
     }
 
     public String toString() {
