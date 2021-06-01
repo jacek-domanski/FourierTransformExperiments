@@ -18,7 +18,9 @@ import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Iterator;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.sin;
@@ -73,12 +75,10 @@ public class Main extends Application {
         // waves - X
         // WAVE_COUNT - N
 
-        ArrayList<Wave> waves = new ArrayList<>();
-
-        final int WAVE_COUNT = input.size();
-        for (int i = 0; i < WAVE_COUNT; i++) {
-            waves.add(generateWave(input, i));
-        }
+        ArrayList<Wave> waves;
+        waves = IntStream.range(0, input.size())
+                    .mapToObj(i -> generateWave(input, i))
+                    .collect(Collectors.toCollection(ArrayList::new));
 
         sortWavesByAmplitude(waves);
         printAmplitudeSumAndWaveCount(waves);
@@ -89,17 +89,22 @@ public class Main extends Application {
         Wave wave = new Wave(0,0);
         final int WAVE_COUNT = input.size();
 
-        for (int i = 0; i < WAVE_COUNT; i++) {
-            double phi = (2 * PI * waveNo * i) / WAVE_COUNT;
-            ComplexNumber inputComponent = input.get(i);
-            ComplexNumber sinusoidalComponent = new ComplexNumber(cos(phi), -sin(phi));
-            wave.add(ComplexNumber.multiply(inputComponent, sinusoidalComponent));
-        }
+        Iterator<ComplexNumber> inputIterator = input.iterator();
+        IntStream.range(0, input.size())
+            .mapToDouble(i -> calculatePhi(i, waveNo, WAVE_COUNT))
+            .mapToObj(phi -> new ComplexNumber(cos(phi), -sin(phi)))
+            .map(sinusoidalComponent -> ComplexNumber.multiply(inputIterator.next(), sinusoidalComponent))
+            .forEach(wave::add);
+
         wave.setRe(wave.getRe()/WAVE_COUNT);
         wave.setIm(wave.getIm()/WAVE_COUNT);
 
         wave.setWaveNo(waveNo);
         return wave;
+    }
+
+    private double calculatePhi(int i, int waveNo, int WAVE_COUNT) {
+        return (2 * PI * waveNo * i) / WAVE_COUNT;
     }
 
     private void sortWavesByAmplitude(ArrayList<Wave> waves) {
@@ -158,18 +163,16 @@ public class Main extends Application {
 //                    wave.getWaveNo() * time + wave.getPhase(),
 //                    wave.getAmplitude()));
 //        }
-        Point lastPoint = new Point (points.get(0), 0, 0);
+        Point lastPoint = points.get(0).copy();
 
         signalFrequency.stream()
-            .map(wave -> new Point(
-                lastPoint,
-                wave.getWaveNo() * time + wave.getPhase(),
-                wave.getAmplitude()
-            ))
+            .map(wave ->
+                lastPoint.translatedInPolar(
+                    wave.getWaveNo() * time + wave.getPhase(),
+                    wave.getAmplitude()))
             .forEach(point -> {
                 points.add(point);
-                lastPoint.x = point.x;
-                lastPoint.y = point.y;
+                lastPoint.set(point);
             });
 
         return points;
@@ -190,28 +193,24 @@ public class Main extends Application {
             canvas.getChildren().remove(lines.remove(0));
         }
 
-        Point lastPoint = new Point(points.get(0), 0, 0);
+        Point lastPoint = new Point(points.get(0));
 
         points.stream()
             .skip(1)
-            .map(point ->
-                new Line(
-                    lastPoint.x,
-                    lastPoint.y,
-                    point.x,
-                    point.y))
+            .map(lastPoint::makeLine)
             .forEach(line -> {
-                lastPoint.x = line.getEndX();
-                lastPoint.y = line.getEndY();
-
-                line.setStroke(Color.WHITE);
-                line.setSmooth(true);
-                line.setStrokeWidth(2);
-
+                lastPoint.setToLineEnd(line);
+                setDisplayParams(line);
                 lines.add(line);
             });
 
         canvas.getChildren().addAll(lines);
+    }
+
+    private void setDisplayParams(Line line) {
+        line.setStroke(Color.WHITE);
+        line.setSmooth(true);
+        line.setStrokeWidth(2);
     }
 
     private void updateTrend(Point new_point, int wave_count) {
