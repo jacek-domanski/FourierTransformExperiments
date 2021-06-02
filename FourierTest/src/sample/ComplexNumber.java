@@ -31,6 +31,20 @@ public class ComplexNumber {
         this.im += other.im;
     }
 
+    public void sub(ComplexNumber other) {
+        this.re -= other.re;
+        this.im -= other.im;
+    }
+
+    public void multiply(ComplexNumber other) {
+        this.re = this.re * other.re - this.im * other.im;
+        this.im = this.re * other.im + this.im * other.re;
+    }
+
+    public ComplexNumber copy() {
+        return new ComplexNumber(this.re, this.im);
+    }
+
     public String toString() {
         return "re:"+ String.format("%.2f", this.re) +" im:"+ String.format("%.2f", this.im);
     }
