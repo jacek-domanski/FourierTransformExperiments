@@ -46,14 +46,17 @@ public class Kookaburra {
 
     private static void getMinAndMax(ArrayList<ComplexNumber> signals, ComplexNumber min, ComplexNumber max) {
         for (ComplexNumber signal : signals) {
+
             if (signal.getRe() < min.getRe()) {
                 min.setRe(signal.getRe());
+
             } else if (signal.getRe() > max.getRe()) {
                 max.setRe(signal.getRe());
             }
 
             if (signal.getIm() < min.getIm()) {
                 min.setIm(signal.getIm());
+
             } else if (signal.getIm() > max.getIm()) {
                 max.setIm(signal.getIm());
             }
